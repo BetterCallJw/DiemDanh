@@ -1,6 +1,3 @@
-@page
-@model LocationApp.Pages.IndexModel
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -8,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Định vị thiết bị</title>
     <script>
+    // Tọa độ gốc (thay đổi nếu cần)
     const baseLatitude = 10.731566000000003;
     const baseLongitude = 106.6991891001512;
 
+    // Xử lý tọa độ
     function processCoordinate(value) {
         return Math.floor(parseFloat(value) * 10000);
     }
@@ -46,7 +45,7 @@
         if (password === correctPassword) {
             localStorage.clear();
             alert("Trạng thái đã được reset. Bạn có thể nhập lại thông tin.");
-            location.reload();  
+            location.reload();
         } else {
             alert("Mật khẩu không đúng!");
         }
@@ -70,12 +69,16 @@
         if (name && mssv) {
             const { latDifference, lonDifference } = compareCoordinates(latitude, longitude);
 
-            document.getElementById("latitude").value = latitude;
-            document.getElementById("longitude").value = longitude;
-            document.getElementById("latDifference").value = latDifference;
-            document.getElementById("lonDifference").value = lonDifference;
+            sendData(name, mssv, `${latitude}, ${longitude}`, latDifference, lonDifference);
 
-            document.getElementById("infoForm").submit();
+            localStorage.setItem("submitted", "true");
+            localStorage.setItem("latitude", latitude);
+            localStorage.setItem("longitude", longitude);
+
+            document.body.innerHTML = `
+                <h1>Thông tin đã được gửi thành công!</h1>
+                <p>Vĩ độ: ${latitude}, Kinh độ: ${longitude}</p>
+                <p>Chênh lệch vĩ độ: ${latDifference}, Chênh lệch kinh độ: ${lonDifference}</p>`;
         } else {
             alert("Vui lòng điền đầy đủ Họ và tên và MSSV.");
         }
@@ -89,6 +92,23 @@
         const lonDifference = Math.abs(processedLon - processedBaseLongitude);
 
         return { latDifference, lonDifference };
+    }
+
+    function sendData(name, mssv, coordinates, latDifference, lonDifference) {
+        fetch("/api/data", {
+            method: "POST",
+            body: JSON.stringify({
+                name: name,
+                mssv: mssv,
+                coordinates: coordinates,
+                latDifference: latDifference.toString(),
+                lonDifference: lonDifference.toString()
+            }),
+            headers: { "Content-Type": "application/json" }
+        })
+        .then(response => response.ok ? response.text() : Promise.reject('Error submitting data'))
+        .then(text => console.log("Response from server:", text))
+        .catch(error => console.error('Lỗi khi gửi dữ liệu:', error));
     }
 
     function showError(error) {
@@ -106,18 +126,15 @@
 
 <h1>Định vị thiết bị di động</h1>
 
-<form id="infoForm" method="post">
+<form id="infoForm">
     <label for="name">Họ và tên:</label><br>
-    <input type="text" id="name" name="Name" required><br><br>
+    <input type="text" id="name" name="name" required><br><br>
     <label for="mssv">MSSV:</label><br>
-    <input type="text" id="mssv" name="Mssv" required><br><br>
-    <input type="hidden" id="latitude" name="Latitude">
-    <input type="hidden" id="longitude" name="Longitude">
-    <input type="hidden" id="latDifference" name="LatDifference">
-    <input type="hidden" id="lonDifference" name="LonDifference">
+    <input type="text" id="mssv" name="mssv" required><br><br>
 </form>
 
-<button type="button" onclick="getLocation()">Lấy vị trí hiện tại</button>
+<!-- Nút để lấy vị trí hiện tại -->
+<button onclick="getLocation()">Lấy vị trí hiện tại</button>
 
 <p id="location"></p>
 

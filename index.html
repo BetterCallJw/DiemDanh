@@ -4,7 +4,104 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Định vị thiết bị</title>
-</head>
+</head>@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Định vị thiết bị";
+}
+
+<h1>Định vị thiết bị di động</h1>
+
+<form id="infoForm">
+    <label for="name">Họ và tên:</label><br>
+    <input type="text" id="name" name="name" required><br><br>
+    <label for="mssv">MSSV:</label><br>
+    <input type="text" id="mssv" name="mssv" required><br><br>
+</form>
+
+<!-- Nút để lấy vị trí hiện tại -->
+<button onclick="getLocation()">Lấy vị trí hiện tại</button>
+
+<p id="location"></p>
+
+<script>
+// Tọa độ gốc
+const baseLatitude = 10.731566000000003;
+const baseLongitude = 106.6991891001512;
+
+function processCoordinate(value) {
+    return Math.floor(parseFloat(value) * 10000);
+}
+
+const processedBaseLatitude = processCoordinate(baseLatitude);
+const processedBaseLongitude = processCoordinate(baseLongitude);
+
+// Hàm lấy vị trí
+function getLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(showPosition, showError);
+    } else {
+        document.getElementById("location").innerHTML = "Trình duyệt không hỗ trợ Geolocation.";
+    }
+}
+
+function showPosition(position) {
+    const latitude = position.coords.latitude;
+    const longitude = position.coords.longitude;
+    
+    const name = document.getElementById("name").value;
+    const mssv = document.getElementById("mssv").value;
+
+    if (name && mssv) {
+        const latDifference = Math.abs(processCoordinate(latitude) - processedBaseLatitude);
+        const lonDifference = Math.abs(processCoordinate(longitude) - processedBaseLongitude);
+
+        // Gửi dữ liệu đến server
+        fetch('/Index', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+            },
+            body: JSON.stringify({
+                Name: name,
+                MSSV: mssv,
+                Latitude: latitude,
+                Longitude: longitude,
+                LatDifference: latDifference,
+                LonDifference: lonDifference
+            })
+        }).then(response => response.text())
+          .then(data => {
+            document.getElementById("location").innerHTML = "Thông tin đã được gửi thành công!";
+          })
+          .catch(error => console.error('Error:', error));
+    } else {
+        alert("Vui lòng điền đầy đủ Họ và tên và MSSV.");
+    }
+}
+
+function showError(error) {
+    let errorMessage = "";
+    switch (error.code) {
+        case error.PERMISSION_DENIED:
+            errorMessage = "Bạn đã từ chối quyền truy cập vị trí.";
+            break;
+        case error.POSITION_UNAVAILABLE:
+            errorMessage = "Thông tin vị trí không khả dụng.";
+            break;
+        case error.TIMEOUT:
+            errorMessage = "Yêu cầu vị trí bị hết thời gian.";
+            break;
+        case error.UNKNOWN_ERROR:
+        default:
+            errorMessage = "Lỗi không xác định.";
+            break;
+    }
+    document.getElementById("location").innerHTML = errorMessage;
+}
+</script>
+
 <body>
 
 <h1>Định vị thiết bị di động</h1>

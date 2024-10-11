@@ -1,0 +1,21 @@
+@model LocationModel
+
+<h1>Định vị thiết bị di động</h1>
+
+<form asp-action="SubmitLocation" method="post">
+    <label for="name">Họ và tên:</label><br>
+    <input type="text" id="name" name="Name" required><br><br>
+
+    <label for="mssv">MSSV:</label><br>
+    <input type="text" id="mssv" name="MSSV" required><br><br>
+
+    <label for="latitude">Vĩ độ:</label><br>
+    <input type="text" id="latitude" name="Latitude" required><br><br>
+
+    <label for="longitude">Kinh độ:</label><br>
+    <input type="text" id="longitude" name="Longitude" required><br><br>
+
+    <button type="submit">Gửi thông tin</button>
+</form>
+
+<p id="location"></p>
